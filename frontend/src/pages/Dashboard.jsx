@@ -2,13 +2,19 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-function Dashboard() {
-  const [resources, setResources] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [searchTerm, setSearchTerm] = useState("");
+const API_URL = process.env.REACT_APP_API_URL;
 
-  // edit state
-  const [editingResource, setEditingResource] = useState(null);
+function Dashboard() {
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
+  const [resources, setResources] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  // Edit state
+  const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({
     title: "",
     description: "",
@@ -16,128 +22,118 @@ function Dashboard() {
     link: "",
   });
 
-  const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-
-  /* ---------------- FETCH RESOURCES ---------------- */
+  /* ================= AUTH CHECK ================= */
   useEffect(() => {
     if (!token) {
       navigate("/");
       return;
     }
+  }, [token, navigate]);
 
+  /* ================= FETCH RESOURCES ================= */
+  useEffect(() => {
     const fetchResources = async () => {
       try {
-        const res = await axios.get(
-          "https://campus-resource-hub.onrender.com/api/resources",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await axios.get(`${API_URL}/api/resources`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setResources(res.data);
       } catch (err) {
         console.error("Error fetching resources", err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchResources();
-  }, [token, navigate]);
+  }, [token]);
 
-  /* ---------------- LOGOUT ---------------- */
+  /* ================= LOGOUT ================= */
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
   };
 
-  /* ---------------- DELETE RESOURCE ---------------- */
+  /* ================= DELETE ================= */
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this resource?"))
-      return;
+    if (!window.confirm("Delete this resource?")) return;
 
     try {
-      await axios.delete(
-        `https://campus-resource-hub.onrender.com/api/resources/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await axios.delete(`${API_URL}/api/resources/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setResources(resources.filter((r) => r._id !== id));
-    } catch (err) {
+    } catch {
       alert("Failed to delete resource");
     }
   };
 
-  /* ---------------- EDIT RESOURCE ---------------- */
-  const startEdit = (resource) => {
-    setEditingResource(resource._id);
+  /* ================= EDIT ================= */
+  const startEdit = (r) => {
+    setEditingId(r._id);
     setEditForm({
-      title: resource.title,
-      description: resource.description,
-      category: resource.category,
-      link: resource.link,
+      title: r.title,
+      description: r.description,
+      category: r.category,
+      link: r.link,
     });
   };
 
   const saveEdit = async () => {
     try {
       const res = await axios.put(
-        `https://campus-resource-hub.onrender.com/api/resources/${editingResource}`,
+        `${API_URL}/api/resources/${editingId}`,
         editForm,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setResources(
-        resources.map((r) =>
-          r._id === editingResource ? res.data : r
-        )
+        resources.map((r) => (r._id === editingId ? res.data : r))
       );
-
-      setEditingResource(null);
-    } catch (err) {
-      alert("Failed to update resource");
+      setEditingId(null);
+    } catch {
+      alert("Update failed");
     }
   };
 
-  /* ---------------- FILTER + SEARCH ---------------- */
+  /* ================= FILTER + SEARCH ================= */
   const filteredResources = resources.filter((r) => {
-    const matchesCategory =
+    const matchCategory =
       selectedCategory === "All" ||
-      r.category.toLowerCase() === selectedCategory.toLowerCase();
+      r.category?.toLowerCase() === selectedCategory.toLowerCase();
 
-    const matchesSearch =
+    const matchSearch =
       r.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return matchesCategory && matchesSearch;
+    return matchCategory && matchSearch;
   });
 
-  /* ---------------- DASHBOARD STATS ---------------- */
-  const total = resources.length;
-  const academics = resources.filter((r) => r.category === "Academics").length;
-  const placements = resources.filter((r) => r.category === "Placements").length;
-  const wellbeing = resources.filter((r) => r.category === "Wellbeing").length;
+  /* ================= STATS ================= */
+  const stats = {
+    total: resources.length,
+    academics: resources.filter((r) => r.category === "Academics").length,
+    placements: resources.filter((r) => r.category === "Placements").length,
+    wellbeing: resources.filter((r) => r.category === "Wellbeing").length,
+  };
 
+  /* ================= UI ================= */
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-
       {/* HEADER */}
-      <div className="max-w-6xl mx-auto flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow">
-        <h1 className="text-2xl font-bold text-primary">
-          Campus Resource Hub
-        </h1>
+      <div className="max-w-6xl mx-auto flex justify-between items-center bg-white p-4 rounded-xl shadow mb-6">
+        <h1 className="text-2xl font-bold text-primary">Campus Resource Hub</h1>
 
         <div className="flex gap-3">
           <button
             onClick={() => navigate("/add-resource")}
-            className="bg-primary px-4 py-2 rounded-lg text-white hover:bg-secondary"
+            className="bg-primary text-white px-4 py-2 rounded-lg"
           >
             + Add Resource
           </button>
           <button
             onClick={handleLogout}
-            className="bg-accent2 px-4 py-2 rounded-lg text-white"
+            className="bg-accent2 text-white px-4 py-2 rounded-lg"
           >
             Logout
           </button>
@@ -146,75 +142,73 @@ function Dashboard() {
 
       {/* STATS */}
       <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total" value={total} />
-        <StatCard label="Academics" value={academics} />
-        <StatCard label="Placements" value={placements} />
-        <StatCard label="Wellbeing" value={wellbeing} />
+        <StatCard label="Total" value={stats.total} />
+        <StatCard label="Academics" value={stats.academics} />
+        <StatCard label="Placements" value={stats.placements} />
+        <StatCard label="Wellbeing" value={stats.wellbeing} />
       </div>
 
       {/* SEARCH + FILTER */}
-      <div className="max-w-6xl mx-auto mb-6 flex justify-end gap-3">
+      <div className="max-w-6xl mx-auto flex justify-end gap-3 mb-6">
         <input
-          type="text"
-          placeholder="Search resources..."
+          placeholder="Search..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="px-4 py-2 rounded-lg border w-64"
+          className="border px-4 py-2 rounded-lg w-64"
         />
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2 rounded-lg border"
+          className="border px-4 py-2 rounded-lg"
         >
-          <option value="All">All</option>
-          <option value="Academics">Academics</option>
-          <option value="Placements">Placements</option>
-          <option value="Wellbeing">Wellbeing</option>
-          <option value="Sports">Sports</option>
+          <option>All</option>
+          <option>Academics</option>
+          <option>Placements</option>
+          <option>Wellbeing</option>
+          <option>Sports</option>
         </select>
       </div>
 
       {/* RESOURCES */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredResources.length === 0 ? (
-          <p className="text-center col-span-full text-gray-500">
+        {loading ? (
+          <p className="col-span-full text-center">Loading...</p>
+        ) : filteredResources.length === 0 ? (
+          <p className="col-span-full text-center text-gray-500">
             No resources found
           </p>
         ) : (
           filteredResources.map((r) => (
             <div key={r._id} className="bg-white p-5 rounded-xl shadow">
-              {editingResource === r._id ? (
+              {editingId === r._id ? (
                 <>
                   <input
                     value={editForm.title}
                     onChange={(e) =>
                       setEditForm({ ...editForm, title: e.target.value })
                     }
-                    className="w-full mb-2 border px-2 py-1 rounded"
+                    className="w-full border mb-2 px-2 py-1 rounded"
                   />
                   <textarea
                     value={editForm.description}
                     onChange={(e) =>
-                      setEditForm({
-                        ...editForm,
-                        description: e.target.value,
-                      })
+                      setEditForm({ ...editForm, description: e.target.value })
                     }
-                    className="w-full mb-2 border px-2 py-1 rounded"
+                    className="w-full border mb-2 px-2 py-1 rounded"
                   />
                   <input
                     value={editForm.category}
                     onChange={(e) =>
                       setEditForm({ ...editForm, category: e.target.value })
                     }
-                    className="w-full mb-2 border px-2 py-1 rounded"
+                    className="w-full border mb-2 px-2 py-1 rounded"
                   />
                   <input
                     value={editForm.link}
                     onChange={(e) =>
                       setEditForm({ ...editForm, link: e.target.value })
                     }
-                    className="w-full mb-3 border px-2 py-1 rounded"
+                    className="w-full border mb-3 px-2 py-1 rounded"
                   />
 
                   <div className="flex gap-2">
@@ -225,7 +219,7 @@ function Dashboard() {
                       Save
                     </button>
                     <button
-                      onClick={() => setEditingResource(null)}
+                      onClick={() => setEditingId(null)}
                       className="bg-gray-300 px-3 py-1 rounded"
                     >
                       Cancel
@@ -236,7 +230,7 @@ function Dashboard() {
                 <>
                   <h2 className="font-semibold text-primary">{r.title}</h2>
                   <p className="text-sm text-gray-600">{r.description}</p>
-                  <span className="text-xs bg-secondary text-white px-2 py-1 rounded inline-block mt-2">
+                  <span className="inline-block mt-2 bg-secondary text-white px-2 py-1 text-xs rounded">
                     {r.category}
                   </span>
                   <a
@@ -272,7 +266,7 @@ function Dashboard() {
   );
 }
 
-/* --------- STAT CARD COMPONENT --------- */
+/* ================= STAT CARD ================= */
 function StatCard({ label, value }) {
   return (
     <div className="bg-white rounded-xl shadow p-4 text-center">
