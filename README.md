@@ -1,10 +1,10 @@
-# Campus Resource Hub ??
+﻿# Campus Resource Hub
 
 Campus Resource Hub is a full-stack MERN application that allows students to discover, add, and manage important campus resources such as academic portals, placement links, and wellbeing support.
 
 ---
 
-## ?? Features
+## Features
 
 - User authentication using JWT
 - Protected routes for authenticated users
@@ -16,7 +16,7 @@ Campus Resource Hub is a full-stack MERN application that allows students to dis
 
 ---
 
-## ??? Tech Stack
+## Tech Stack
 
 ### Frontend
 - React.js
@@ -32,10 +32,27 @@ Campus Resource Hub is a full-stack MERN application that allows students to dis
 
 ---
 
-## ?? Setup Instructions
+## Setup Instructions
 
 ### Backend
-`ash
 cd backend
 npm install
 npm run dev
+
+### Frontend
+cd frontend
+npm install
+npm start
+
+---
+
+## Future Enhancements
+- Role-based access (Admin/User)
+- Pagination and sorting
+- Deployment using Vercel and Render
+
+---
+
+## Author
+Usha Sree Uttarkar  
+CSE Student | MERN Stack Developer
