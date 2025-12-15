@@ -29,7 +29,7 @@ function Dashboard() {
     const fetchResources = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/resources",
+          "https://campus-resource-hub.onrender.com/api/resources",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -56,7 +56,7 @@ function Dashboard() {
 
     try {
       await axios.delete(
-        `http://localhost:5000/api/resources/${id}`,
+        `https://campus-resource-hub.onrender.com/api/resources/${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -81,7 +81,7 @@ function Dashboard() {
   const saveEdit = async () => {
     try {
       const res = await axios.put(
-        `http://localhost:5000/api/resources/${editingResource}`,
+        `https://campus-resource-hub.onrender.com/api/resources/${editingResource}`,
         editForm,
         {
           headers: { Authorization: `Bearer ${token}` },

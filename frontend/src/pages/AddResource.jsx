@@ -15,7 +15,7 @@ function AddResource() {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/resources",
+        "https://campus-resource-hub.onrender.com/api/resources",
         { title, description, category, link },
         {
           headers: {
