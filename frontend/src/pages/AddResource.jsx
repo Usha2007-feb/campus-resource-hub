@@ -1,7 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+// ✅ Safe API URL (production + local)
+const API_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 function AddResource() {
+  const navigate = useNavigate();
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -10,12 +17,20 @@ function AddResource() {
 
   const token = localStorage.getItem("token");
 
+  /* ================= AUTH CHECK ================= */
+  useEffect(() => {
+    if (!token) {
+      navigate("/");
+    }
+  }, [token, navigate]);
+
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       await axios.post(
-        "https://campus-resource-hub.onrender.com/api/resources",
+        `${API_URL}/api/resources`,
         { title, description, category, link },
         {
           headers: {
@@ -32,12 +47,12 @@ function AddResource() {
       setCategory("");
       setLink("");
 
-      // redirect after short delay
+      // redirect to dashboard
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        navigate("/dashboard");
       }, 1000);
-
     } catch (error) {
+      console.error(error);
       setMessage("Failed to add resource");
     }
   };
@@ -45,7 +60,6 @@ function AddResource() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-secondary to-accent2">
       <div className="w-[380px] bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8">
-
         <h1 className="text-2xl font-bold text-primary text-center mb-4">
           Add New Resource
         </h1>
