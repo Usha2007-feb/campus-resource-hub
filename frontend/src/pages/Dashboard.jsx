@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = process.env.REACT_APP_API_URL;
+// ✅ SAFE API URL (production + local fallback)
+const API_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -26,7 +28,6 @@ function Dashboard() {
   useEffect(() => {
     if (!token) {
       navigate("/");
-      return;
     }
   }, [token, navigate]);
 
@@ -39,13 +40,13 @@ function Dashboard() {
         });
         setResources(res.data);
       } catch (err) {
-        console.error("Error fetching resources", err);
+        console.error("Error fetching resources:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchResources();
+    if (token) fetchResources();
   }, [token]);
 
   /* ================= LOGOUT ================= */
@@ -62,7 +63,7 @@ function Dashboard() {
       await axios.delete(`${API_URL}/api/resources/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setResources(resources.filter((r) => r._id !== id));
+      setResources((prev) => prev.filter((r) => r._id !== id));
     } catch {
       alert("Failed to delete resource");
     }
@@ -87,8 +88,8 @@ function Dashboard() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setResources(
-        resources.map((r) => (r._id === editingId ? res.data : r))
+      setResources((prev) =>
+        prev.map((r) => (r._id === editingId ? res.data : r))
       );
       setEditingId(null);
     } catch {
@@ -122,7 +123,9 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-100 p-6">
       {/* HEADER */}
       <div className="max-w-6xl mx-auto flex justify-between items-center bg-white p-4 rounded-xl shadow mb-6">
-        <h1 className="text-2xl font-bold text-primary">Campus Resource Hub</h1>
+        <h1 className="text-2xl font-bold text-primary">
+          Campus Resource Hub
+        </h1>
 
         <div className="flex gap-3">
           <button
@@ -192,7 +195,10 @@ function Dashboard() {
                   <textarea
                     value={editForm.description}
                     onChange={(e) =>
-                      setEditForm({ ...editForm, description: e.target.value })
+                      setEditForm({
+                        ...editForm,
+                        description: e.target.value,
+                      })
                     }
                     className="w-full border mb-2 px-2 py-1 rounded"
                   />
