@@ -1,6 +1,10 @@
 import { useState } from "react";
 import axios from "axios";
 
+// ✅ Safe API URL (production + local fallback)
+const API_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -12,11 +16,11 @@ function Register() {
 
     try {
       const res = await axios.post(
-        "https://campus-resource-hub.onrender.com/api/auth/register",
+        `${API_URL}/api/auth/register`,
         { name, email, password }
       );
 
-      setMessage(res.data.message);
+      setMessage(res.data.message || "Registration successful 🎉");
       setName("");
       setEmail("");
       setPassword("");
@@ -28,7 +32,6 @@ function Register() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-secondary to-accent2">
       <div className="w-[360px] bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8">
-        
         <h1 className="text-3xl font-bold text-primary text-center mb-1">
           Create Account
         </h1>
@@ -38,7 +41,9 @@ function Register() {
         </p>
 
         {message && (
-          <p className="text-center text-sm mb-3 text-primary">{message}</p>
+          <p className="text-center text-sm mb-3 text-primary">
+            {message}
+          </p>
         )}
 
         <form onSubmit={handleRegister}>
@@ -79,7 +84,10 @@ function Register() {
 
         <p className="text-sm text-center mt-4">
           Already have an account?{" "}
-          <a href="/" className="text-primary font-semibold hover:underline">
+          <a
+            href="/"
+            className="text-primary font-semibold hover:underline"
+          >
             Login
           </a>
         </p>
