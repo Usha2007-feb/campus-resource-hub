@@ -1,6 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
 
+const API_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,8 +14,7 @@ function Login() {
 
     try {
       const res = await axios.post(
-        "https://campus-resource-hub.onrender.com/api/auth/login",
-
+        `${API_URL}/api/auth/login`,
         { email, password }
       );
 
@@ -31,7 +33,6 @@ function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-secondary to-accent2">
       <div className="w-[360px] bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl p-8">
-
         <h1 className="text-3xl font-bold text-primary text-center mb-1">
           Campus Resource Hub
         </h1>
@@ -41,7 +42,9 @@ function Login() {
         </p>
 
         {message && (
-          <p className="text-center text-sm mb-3 text-primary">{message}</p>
+          <p className="text-center text-sm mb-3 text-primary">
+            {message}
+          </p>
         )}
 
         <form onSubmit={handleLogin}>
@@ -73,7 +76,10 @@ function Login() {
 
         <p className="text-sm text-center mt-4">
           New here?{" "}
-          <a href="/register" className="text-primary font-semibold hover:underline">
+          <a
+            href="/register"
+            className="text-primary font-semibold hover:underline"
+          >
             Create an account
           </a>
         </p>
